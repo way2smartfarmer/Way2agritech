@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'playground',
     'store',
     'tags',
-    'likes'
+    'likes',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
 ]
 
 ROOT_URLCONF = 'Agritech.urls'
@@ -60,7 +67,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
 
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'agritech/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -125,11 +132,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static")  # this is your static folder
+    os.path.join(BASE_DIR, "agritech/static")  # this is your static folder
 ]
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'assets')  # this is you assets folder.
 
 
 MEDIA_URL = '/media/'
