@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 from . import models
-from django.contrib.contenttypes.admin import GenericTabularInline
+
 from django.db.models import Count
 from django.utils.html import format_html, urlencode
 from django.urls import reverse
@@ -20,10 +20,6 @@ class InventoryFilter(admin.SimpleListFilter):
             return queryset.filter(inventory__lt=10)
 
 
-# class TagInline(GenericTabularInline):
-#     model = TaggedItem
-
-
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
 
@@ -33,7 +29,7 @@ class ProductAdmin(admin.ModelAdmin):
         'slug': ['title']
     }
     # exclude = ['promotions']
-    # inlines = TagInline
+
     actions = ['clear_inventory']
     list_display = ['title', 'unit_price', 'inventory', 'collection']
     list_editable = ['unit_price']
@@ -61,6 +57,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(models.Collection)
 class CollectionAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['featured_product']
     list_display = ['title', 'products_count']
     search_fields = ['title_istartswith']
 
@@ -71,22 +68,37 @@ class CollectionAdmin(admin.ModelAdmin):
                + urlencode({
                    'collection_id': str(collection.id)
                }))
-        return format_html('<a href="{}">{}</a>', url,
+        return format_html('<a href="{}">{} Products</a>', url,
                            collection.products_count)
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
-            products_count=Count('product')
+            products_count=Count('products')
         )
 
 
 @admin.register(models.Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'membership']
+    list_display = ['first_name', 'last_name', 'membership', 'orders']
     list_editable = ['membership']
     list_per_page = 10
     ordering = ['first_name', 'last_name']
     search_fields = ['first_name__istartswith', 'last_name__startswith']
+
+    @admin.display(ordering='orders_count')
+    def orders(self, customer):
+        url = (
+            reverse('admin:store_order_changelist')
+            + '?'
+            + urlencode({
+                'customer__id': str(customer.id)
+            }))
+        return format_html('<a href="{}">{} Orders</a>', url, customer.orders_count)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            orders_count=Count('order')
+        )
 
 
 class OrderItemInline(admin.TabularInline):
