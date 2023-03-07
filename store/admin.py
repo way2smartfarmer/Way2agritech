@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 from . import models
-
+from django.db.models.query import QuerySet
 from django.db.models import Count
 from django.utils.html import format_html, urlencode
 from django.urls import reverse
@@ -15,7 +15,7 @@ class InventoryFilter(admin.SimpleListFilter):
             ('<10', 'Low')
         ]
 
-    def queryset(self, request, queryset):
+    def queryset(self, request, queryset: QuerySet):
         if self.value() == '<10':
             return queryset.filter(inventory__lt=10)
 
@@ -31,20 +31,24 @@ class ProductAdmin(admin.ModelAdmin):
     # exclude = ['promotions']
 
     actions = ['clear_inventory']
-    list_display = ['title', 'unit_price', 'inventory', 'collection']
+    list_display = ['title', 'unit_price',
+                    'inventory', 'collection']
     list_editable = ['unit_price']
     list_filter = ['collection', 'last_update', InventoryFilter]
     list_per_page = 10
     list_select_related = ['collection']
 
-# def collection_title(self,product):
-#     return product.collection.title
 
-# @admin.display(ordering='inventory')
-# def inventory_status(self, product):
-#     if product.inventory < 10:
-#         return 'Low'
-#     return 'Ok'
+def collection_title(self, product):
+    return product.collection.title
+
+
+@admin.display(ordering='inventory')
+def inventory_status(self, product):
+    if product.inventory < 10:
+        return 'Low'
+    return 'Ok'
+
     @admin.action(description='Clear Inventory')
     def clear_inventory(self, request, queryset):
         updated_count = queryset.update(inventory=0)
