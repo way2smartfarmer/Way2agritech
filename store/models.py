@@ -1,4 +1,6 @@
 from django.db import models
+from django.conf import settings
+from django.contrib import admin
 from django.core.validators import MinValueValidator
 from uuid import uuid4
 
@@ -62,21 +64,27 @@ class Customer(models.Model):
         (MEMBERSHIP_SILVER, 'Regular'),
         (MEMBERSHIP_GOLD, 'Loyal'),
     ]
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+
     phone = models.CharField(max_length=255)
-    birth_date = models.DateField(null=True)
+
     membership = models.CharField(
         max_length=1, choices=MEMBERSHIP_CHICES, default=MEMBERSHIP_BRONZE)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f'{self.user.first_name}{self.user.last_name}'
 
-def __str__(self):
-    return f'{self.first_name}{self.last_name}'
+    @admin.display(ordering='user__first_name')
+    def first_name(self):
+        return self.user.first_name
 
+    @admin.display(ordering='user__last_name')
+    def last_name(self):
+        return self.user.last_name
 
-class Meta:
-    ordering = ['first_name', 'last_name']
+    class Meta:
+        ordering = ['user__first_name', 'user__last_name']
 
 # Order Model
 
@@ -99,8 +107,13 @@ class Order(models.Model):
     def __str__(self):
         return f'Order {self.id} placed by {self.customer}'
 
+    # class Meta:
+    #     ordering = ['customer__last_name', 'customer__first_name', 'placed_at']
+
     class Meta:
-        ordering = ['customer__last_name', 'customer__first_name', 'placed_at']
+        permissions = [
+            ('cancel_order', 'Can cancel order')
+        ]
 # 1-many rel with Order-Item
 
 
