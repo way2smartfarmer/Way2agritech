@@ -22,12 +22,13 @@ class UserAdmin(BaseUserAdmin):
 
 
 class TagInline(GenericTabularInline):
-    autocomplete_fields = ['tag']
+    # autocomplete_fields = ['tag']
+    
     model = TaggedItem
 
 
 class customProductAdmin(ProductAdmin):
-    inline = [TagInline]
+    inlines = [TagInline]
 
 
 admin.site.unregister(Product)

@@ -4,6 +4,7 @@ from django.db.models.query import QuerySet
 from django.db.models import Count
 from django.utils.html import format_html, urlencode
 from django.urls import reverse
+from .models import ProductImage
 
 
 class InventoryFilter(admin.SimpleListFilter):
@@ -20,6 +21,16 @@ class InventoryFilter(admin.SimpleListFilter):
             return queryset.filter(inventory__lt=10)
 
 
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    readonly_fields = ['thumbnail']
+
+    def thumbnail(self, instance):
+        if instance.image.name != '':
+            return format_html(f'<img src="{instance.image.url}" class="thumbnail"/>')
+        return ''
+
+
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
 
@@ -31,6 +42,7 @@ class ProductAdmin(admin.ModelAdmin):
     # exclude = ['promotions']
 
     actions = ['clear_inventory']
+    inlines = [ProductImageInline]
     list_display = ['title', 'unit_price',
                     'inventory', 'collection']
     list_editable = ['unit_price']
@@ -58,6 +70,12 @@ def clear_inventory(self, request, queryset):
         f'{updated_count} products were succesfully updated.',
         messages.ERROR
     )
+
+
+class Media:
+    css = {
+        'all': ['store/styles.css']
+    }
 
 
 @admin.register(models.Collection)
