@@ -11,6 +11,7 @@ drf-nested-routers = "*"
 django-filter = "*"
 pillow = "*"
 django-cors-headers = "*"
+whitenoise = "*"
 
 [dev-packages]
 pytest = "*"

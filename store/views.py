@@ -53,14 +53,22 @@ class CollectionViewSet(ModelViewSet):
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
 
-    def get_queryset(self):
-        return Review.objects.filter(product_id=self.kwargs['product_pk'])
-
     def get_serializer_context(self):
-        return {'product_id': self.kwargs['product_pk']}
+        context = super().get_serializer_context()
+        if 'product_pk' in self.kwargs:
+            context['product_id'] = self.kwargs['product_pk']
+        return context
+
+    def get_queryset(self):
+        if 'product_pk' in self.kwargs:
+            return Review.objects.filter(product_id=self.kwargs['product_pk'])
+        return Review.objects.all()
 
     # def create(self, validated_data):
-    #     product_id = self.kwargs['pk']
+    #     if 'product_id' in self.context:
+    #         product_id = self.context['product_id']
+    #     else:
+    #         product_id = self.kwargs['product_pk']
     #     return Review.objects.create(product_id=product_id, **validated_data)
 
 
@@ -70,6 +78,11 @@ class CartViewSet(CreateModelMixin,
                   GenericViewSet):
     queryset = Cart.objects.prefetch_related('items__product').all()
     serializer_class = CartSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['cart_pk'] = self.kwargs['pk']
+        return context
 
 
 class CartItemViewSet(ModelViewSet):
@@ -148,16 +161,24 @@ class OrderViewSet(ModelViewSet):
         if user.is_staff:
             return Order.objects.all()
 
-        customer_id = Customer.objects.only(
-            'id').get(user_id=user.id)
+        try:
+            customer_id = Customer.objects.only('id').get(user_id=user.id).id
+        except Customer.DoesNotExist:
+            customer_id = None
         return Order.objects.filter(customer_id=customer_id)
 
 
 class ProductImageViewSet(ModelViewSet):
     serializer_class = ProductImageSerializer
 
-    def get_serializer_class(self):
-        return {'product_id': self.kwargs['product_pk']}
+    def get_serializer_context(self):
+
+        context = super().get_serializer_context()
+        if 'product_pk' in self.kwargs:
+            context['product_id'] = self.kwargs['product_pk']
+        return context
 
     def get_queryset(self):
-        return ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+        if 'product_pk' in self.kwargs:
+            return ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+        return ProductImage.objects.all()

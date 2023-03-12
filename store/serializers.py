@@ -15,13 +15,18 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    images = serializers.ImageField()
+
     def create(self, validated_data):
-        product_id = self.context['product_id']
+        product_id = self.context.get('product_id')
+        if product_id is None:
+            raise serializers.ValidationError(
+                "Product ID not found in context.")
         return ProductImage.objects.create(product_id=product_id, **validated_data)
 
     class Meta:
         model = ProductImage
-        fields = ['id', 'image']
+        fields = ['id', 'images']
 
 
 class ProductSerializer(serializers.ModelSerializer):

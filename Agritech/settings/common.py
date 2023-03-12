@@ -15,19 +15,15 @@ import os
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6w%a23u&h(@htqyq0h*e7+!=1mh%!!m_8zkoc8efo1bzst$#0_'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+
 
 
 # Application definition
@@ -44,7 +40,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'debug_toolbar',
-    'playground',
     'store',
     'tags',
     'likes',
@@ -56,6 +51,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -100,19 +96,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Agritech.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'agritech',
-        'HOST': '127.0.0.1',
-        'PORT': '3006',
-        'USER': 'root',
-        'PASSWORD': 'Mysql@way2agri'
-    }
-}
 
 
 # Password validation
@@ -161,8 +145,6 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # this is you assets folder.
 
 
-
-
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -202,3 +184,32 @@ SIMPLE_JWT = {
 # EMAIL_HOST_PASSWORD=''
 # EMAIL_PORT = 25
 # DEFAULT_FROM_EMAIL = 'from@way2agribusiness.com'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler'
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'general.log',
+            'formatter': 'verbose'
+        },
+
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console', 'file'],
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+        }
+    },
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} ({levelname})-{name}-{message}',
+            'style': '{'  # str.format()
+        }
+    }
+}
