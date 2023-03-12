@@ -153,16 +153,15 @@ STATIC_URL = '/static/'
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "agritech/static")  # this is your static folder
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "agritech/static")  # this is your static folder
+# ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'assets')  # this is you assets folder.
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # this is you assets folder.
 
 
-MEDIA_URL = '/media/'
+
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
