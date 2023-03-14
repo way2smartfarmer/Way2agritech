@@ -7,11 +7,21 @@ from .signals import order_created
 from .models import Product, Collection, Review, Cart, CartItem, Customer, Order, OrderItem, ProductImage
 
 
+# class SubCollectionSerializer(serializers.ModelSerializer):
+#     products_count = serializers.IntegerField(read_only=True)
+
+#     class Meta:
+#         model = SubCollection
+#         fields = ['id', 'title', 'products_count']
+
+
 class CollectionSerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(read_only=True)
+    # subcollections = SubCollectionSerializer(many=True, read_only=True)
+
     class Meta:
         model = Collection
-        fields = ['id', 'title', 'products_count']
-    products_count = serializers.IntegerField(read_only=True)
+        fields = ['id', 'title', 'products_count', 'image']
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -30,12 +40,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True, read_only=True)
+    # images = ProductImageSerializer(many=True, read_only=True)
+    collection = CollectionSerializer()
+    # subcollection = SubCollectionSerializer()
 
     class Meta:
         model = Product
         fields = ['id', 'title', 'slug', 'inventory',
-                  'price', 'collection', 'description', 'images']
+                  'price', 'collection', 'description', 'image']
 
     price = serializers.DecimalField(
         max_digits=6, decimal_places=2, source='unit_price')
@@ -59,11 +71,13 @@ class ProductSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = ['id', 'date', 'name', 'description']
+        fields = ['id', 'date', 'name', 'description', 'product']
 
     def create(self, validated_data):
-        product_id = self.context['product_id']
-        return Review.objects.create(product_id=product_id, **validated_data)
+        product = self.context.get('product')
+        if product:
+            validated_data['product'] = product
+        return super().create(validated_data)
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
@@ -107,7 +121,7 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         return value
 
     def save(self, **kwargs):
-        cart_id = self.context['cart_id']
+        cart_id = self.context['cart_pk']
         product_id = self.validated_data['product_id']
         quantity = self.validated_data['quantity']
 

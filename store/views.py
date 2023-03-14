@@ -10,7 +10,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from .permissions import IsAdminOrReadOnly, FullDjangoModelPermissions, ViewCustomerHistoryPermission
-from .filters import ProductFilter
+from .filters import ProductFilter, SubCollectionFilter
 from .models import Collection, Product, Review, Cart, CartItem, Customer, OrderItem, Order, ProductImage
 from .serializers import CollectionSerializer, ProductSerializer, ReviewSerializer, CartSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CartItemSerializer, CustomerSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer, ProductImageSerializer
 
@@ -50,19 +50,67 @@ class CollectionViewSet(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# class SubCollectionViewSet(ModelViewSet):
+#     queryset = SubCollection.objects.annotate(
+#         products_count=Count('products')).all()
+#     serializer_class = SubCollectionSerializer
+#     permission_classes = [IsAdminOrReadOnly]
+#     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+#     filterset_class = SubCollectionFilter
+#     search_fields = ['title']
+#     ordering_fields = ['title']
+
+
+    def get_serializer_context(self):
+        return {'request': self.request}
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        collection = get_object_or_404(
+            Collection, pk=request.data['collection'])
+        self.perform_create(serializer, collection)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer, collection):
+        serializer.save(collection=collection)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        collection = get_object_or_404(
+            Collection, pk=request.data['collection'])
+        self.perform_update(serializer, collection)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer, collection):
+        serializer.save(collection=collection)
+
+
 class ReviewViewSet(ModelViewSet):
     serializer_class = ReviewSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         if 'product_pk' in self.kwargs:
-            context['product_id'] = self.kwargs['product_pk']
+            context['product'] = get_object_or_404(
+                Product, pk=self.kwargs['product_pk'])
+
         return context
 
     def get_queryset(self):
         if 'product_pk' in self.kwargs:
             return Review.objects.filter(product_id=self.kwargs['product_pk'])
         return Review.objects.all()
+
+    def perform_create(self, serializer):
+        if 'product_pk' in self.kwargs:
+            product = get_object_or_404(Product, pk=self.kwargs['product_pk'])
+            serializer.save(product=product)
+        else:
+            serializer.save()
 
     # def create(self, validated_data):
     #     if 'product_id' in self.context:
@@ -81,12 +129,14 @@ class CartViewSet(CreateModelMixin,
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['cart_pk'] = self.kwargs['pk']
+        if 'pk' in self.kwargs:
+            context['cart_pk'] = self.kwargs['pk']
         return context
 
 
 class CartItemViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
+    serializer_class = CartItemSerializer
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -96,12 +146,15 @@ class CartItemViewSet(ModelViewSet):
         return CartItemSerializer
 
     def get_serializer_context(self):
-        return {'cart_id': self.kwargs['cart_pk']}
+        context = super().get_serializer_context()
+        context['cart_pk'] = self.kwargs['cart_pk']
+        return context
 
     def get_queryset(self):
-        return CartItem.objects \
-            .filter(cart_id=self.kwargs['cart_pk']) \
-            .select_related('product')
+        return CartItem.objects.filter(cart_id=self.kwargs.get('cart_pk')).select_related('product')
+
+    def perform_create(self, serializer):
+        serializer.save(cart_id=self.kwargs.get('cart_pk'))
 
 
 class CustomerViewSet(ModelViewSet):

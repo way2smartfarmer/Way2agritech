@@ -17,9 +17,12 @@ class Promotion(models.Model):
 
 # 1-Many rel with Collection-Product
 
+# 1-Many rel with Collection-Product
+
 
 class Collection(models.Model):
     title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='store/icons/')
     featured_product = models.ForeignKey(
         'Product', on_delete=models.SET_NULL, null=True,  related_name='+', blank=True)
 
@@ -30,6 +33,16 @@ class Collection(models.Model):
         ordering = ['title']
 
 
+# class SubCollection(models.Model):
+#     title = models.CharField(max_length=255)
+#     collection = models.ForeignKey(
+#         Collection, on_delete=models.CASCADE, related_name='subcollections')
+
+#     def __str__(self):
+#         return self.title
+
+#     class Meta:
+#         ordering = ['title']
 # Product Model
 
 
@@ -38,6 +51,7 @@ class Product(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField()
     description = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to='store/images/')
     unit_price = models.DecimalField(max_digits=6, decimal_places=2, validators=[
                                      MinValueValidator(1)])
     inventory = models.IntegerField(validators=[
@@ -45,6 +59,8 @@ class Product(models.Model):
     last_update = models.DateTimeField(auto_now=True)
     collection = models.ForeignKey(
         Collection, on_delete=models.PROTECT, related_name='products')
+    # subcollection = models.ForeignKey(
+    #     SubCollection, on_delete=models.CASCADE, related_name='products', blank=True, null=True)
     promotions = models.ManyToManyField(Promotion, blank=True)
 
     def __str__(self):
